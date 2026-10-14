@@ -115,11 +115,15 @@ exports.login = async (req, res) => {
             });
         }
 
-        const [users] = await pool.query('SELECT * FROM users WHERE username = ? LIMIT 1', [username.toLowerCase().trim()]);
+        const loginIdentifier = username.toLowerCase().trim();
+        const [users] = await pool.query(
+            'SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1',
+            [loginIdentifier, loginIdentifier]
+        );
         if (users.length === 0) {
             return res.status(401).json({
                 success: false,
-                message: 'Username atau password yang Anda masukkan salah.'
+                message: 'Username/Email atau kata sandi yang Anda masukkan salah.'
             });
         }
 
