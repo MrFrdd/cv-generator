@@ -107,6 +107,7 @@
     box-shadow: none !important;
     border: none !important;
     width: 210mm !important;
+    transform: none !important;
   }
 
   .a4-sheet {

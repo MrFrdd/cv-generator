@@ -19,6 +19,12 @@ export const downloadPDF = async (elementId, filename = 'Curriculum_Vitae.pdf') 
     return false;
   }
 
+  // Simpan transform asli (jika sedang di-scale untuk tampilan mobile responsive)
+  const prevTransform = element.style.transform;
+  const prevTransformOrigin = element.style.transformOrigin;
+  element.style.transform = 'none';
+  element.style.transformOrigin = 'initial';
+
   const opt = {
     margin: 0,
     filename: filename,
@@ -47,5 +53,9 @@ export const downloadPDF = async (elementId, filename = 'Curriculum_Vitae.pdf') 
     // Fallback otomatis ke native print jika html2pdf terkendala
     window.print();
     return false;
+  } finally {
+    // Kembalikan scale responsive
+    element.style.transform = prevTransform;
+    element.style.transformOrigin = prevTransformOrigin;
   }
 };
