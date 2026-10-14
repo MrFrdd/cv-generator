@@ -4,7 +4,8 @@
   "description": "CV Generator Fullstack App",
   "main": "backend/server.js",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node backend/server.js",
+    "build": "npm run --prefix frontend build"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
