@@ -54,7 +54,20 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 404 Route
+// Static frontend build (jika ada, untuk hosting fullstack Glitch)
+const fs = require('fs');
+const frontendDist = path.join(__dirname, '../frontend/dist');
+if (fs.existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+    app.get('*', (req, res, next) => {
+        if (req.originalUrl.startsWith('/api') || req.originalUrl.startsWith('/uploads')) {
+            return next();
+        }
+        res.sendFile(path.join(frontendDist, 'index.html'));
+    });
+}
+
+// 404 Route for unhandled API endpoints
 app.use('*', (req, res) => {
     res.status(404).json({
         success: false,
