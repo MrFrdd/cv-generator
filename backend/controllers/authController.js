@@ -106,18 +106,19 @@ exports.register = async (req, res) => {
 // Login
 exports.login = async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const identifier = (req.body.username || req.body.email || '').toString().trim();
+        const password = (req.body.password || '').toString();
 
-        if (!username || !password) {
+        if (!identifier || !password) {
             return res.status(400).json({
                 success: false,
-                message: 'Username dan password wajib diisi.'
+                message: 'Username/Email dan kata sandi wajib diisi.'
             });
         }
 
-        const loginIdentifier = username.toLowerCase().trim();
+        const loginIdentifier = identifier.toLowerCase();
         const [users] = await pool.query(
-            'SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1',
+            'SELECT * FROM users WHERE LOWER(username) = ? OR LOWER(email) = ? LIMIT 1',
             [loginIdentifier, loginIdentifier]
         );
         if (users.length === 0) {
@@ -132,7 +133,7 @@ exports.login = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
-                message: 'Username atau password yang Anda masukkan salah.'
+                message: 'Username/Email atau kata sandi yang Anda masukkan salah.'
             });
         }
 
