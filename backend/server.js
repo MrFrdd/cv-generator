@@ -68,3 +68,5 @@ app.listen(PORT, () => {
     console.log(`📡 URL API: http://localhost:${PORT}/api`);
     console.log(`===============================================`);
 });
+
+module.exports = app;
