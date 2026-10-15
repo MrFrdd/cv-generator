@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { cvService } from '../services/cvService';
+import { getFullImageUrl } from '../utils/imageUrl';
 import Modal from '../components/common/Modal';
 import Toast from '../components/common/Toast';
 
@@ -208,7 +209,7 @@ const DashboardPage = () => {
                     <div className="flex items-center gap-3">
                       {item.photo_url ? (
                         <img
-                          src={item.photo_url.startsWith('http') ? item.photo_url : `http://localhost:5000${item.photo_url}`}
+                          src={getFullImageUrl(item.photo_url)}
                           alt={item.full_name}
                           className="w-11 h-11 rounded-xl object-cover border border-slate-200 shadow-sm"
                         />

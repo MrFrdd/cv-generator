@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, Award, Briefcase, GraduationCap, Code, BookOpen, Users } from 'lucide-react';
+import { getFullImageUrl } from '../../utils/imageUrl';
 
 const TemplateProfessional = ({ data }) => {
   const p = data?.personal_information || {};
@@ -31,7 +32,7 @@ const TemplateProfessional = ({ data }) => {
         </div>
         {p.photo_url && (
           <img
-            src={p.photo_url.startsWith('http') ? p.photo_url : `http://localhost:5000${p.photo_url}`}
+            src={getFullImageUrl(p.photo_url)}
             alt={p.full_name}
             className="w-20 h-24 object-cover rounded border border-slate-300 shadow-sm"
           />

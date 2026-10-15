@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Upload, X, User, Mail, Phone, MapPin, Globe, Linkedin, Github } from 'lucide-react';
 import { cvService } from '../../services/cvService';
+import { getFullImageUrl } from '../../utils/imageUrl';
 
 const PersonalForm = ({ data, onChange }) => {
   const [uploading, setUploading] = useState(false);
@@ -56,7 +57,7 @@ const PersonalForm = ({ data, onChange }) => {
           {p.photo_url ? (
             <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-primary-500 shadow-sm">
               <img
-                src={p.photo_url.startsWith('http') ? p.photo_url : `http://localhost:5000${p.photo_url}`}
+                src={getFullImageUrl(p.photo_url)}
                 alt="Foto Profil"
                 className="w-full h-full object-cover"
               />

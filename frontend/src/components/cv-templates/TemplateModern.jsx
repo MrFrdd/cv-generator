@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Phone, MapPin, Globe, Linkedin, Github, Briefcase, GraduationCap, Code, Award, FolderKanban, Users } from 'lucide-react';
+import { getFullImageUrl } from '../../utils/imageUrl';
 
 const TemplateModern = ({ data }) => {
   const p = data?.personal_information || {};
@@ -26,7 +27,7 @@ const TemplateModern = ({ data }) => {
           <div className="flex flex-col items-center mb-6">
             {p.photo_url ? (
               <img
-                src={p.photo_url.startsWith('http') ? p.photo_url : `http://localhost:5000${p.photo_url}`}
+                src={getFullImageUrl(p.photo_url)}
                 alt={p.full_name}
                 className="w-28 h-28 object-cover rounded-full border-4 border-primary-500 shadow-md mb-3"
               />
