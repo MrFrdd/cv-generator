@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-const pool = mysql.createPool({
+const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
@@ -12,8 +12,33 @@ const pool = mysql.createPool({
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined
-});
+    ssl: (process.env.DB_SSL === 'true' || (process.env.DB_HOST && process.env.DB_HOST.includes('aivencloud.com'))) ? { rejectUnauthorized: false } : undefined
+};
+
+const dbUrl = process.env.DATABASE_URL || process.env.MYSQL_URL || process.env.DB_URL;
+let pool;
+if (dbUrl) {
+    try {
+        const urlObj = new URL(dbUrl);
+        pool = mysql.createPool({
+            host: urlObj.hostname,
+            user: decodeURIComponent(urlObj.username || 'avnadmin'),
+            password: decodeURIComponent(urlObj.password || ''),
+            database: urlObj.pathname ? decodeURIComponent(urlObj.pathname.replace(/^\//, '')) : 'defaultdb',
+            port: parseInt(urlObj.port || '3306', 10),
+            waitForConnections: true,
+            connectionLimit: 10,
+            queueLimit: 0,
+            enableKeepAlive: true,
+            keepAliveInitialDelay: 0,
+            ssl: { rejectUnauthorized: false }
+        });
+    } catch (e) {
+        pool = mysql.createPool(dbConfig);
+    }
+} else {
+    pool = mysql.createPool(dbConfig);
+}
 
 const fs = require('fs');
 const path = require('path');

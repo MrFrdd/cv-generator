@@ -8,6 +8,8 @@ const cvRoutes = require('./routes/cvRoutes');
 const templateRoutes = require('./routes/templateRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
+const pool = require('./config/database');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -22,10 +24,26 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+    let dbStatus = 'DISCONNECTED';
+    let dbError = null;
+    try {
+        await pool.query('SELECT 1');
+        dbStatus = 'CONNECTED';
+    } catch (err) {
+        dbStatus = 'ERROR';
+        dbError = err.message;
+    }
+
     res.json({
         status: 'UP',
         message: 'Backend CV Generator API berjalan dengan baik',
+        database: {
+            status: dbStatus,
+            configured_host: process.env.DB_HOST || (process.env.DATABASE_URL ? 'via DATABASE_URL' : 'localhost (default)'),
+            ssl: process.env.DB_SSL === 'true' || (process.env.DB_HOST && process.env.DB_HOST.includes('aivencloud.com')),
+            error: dbError
+        },
         timestamp: new Date().toISOString()
     });
 });
