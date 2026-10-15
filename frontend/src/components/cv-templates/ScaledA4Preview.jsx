@@ -12,7 +12,7 @@ const A4_WIDTH_PX = 794;
  * wrapper diberi ukuran hasil scale supaya seluruh CV (semua halaman)
  * terlihat penuh dan bisa di-scroll ke bawah.
  */
-const ScaledA4Preview = ({ children }) => {
+const ScaledA4Preview = ({ children, maxScale = 1 }) => {
   const wrapRef = useRef(null);
   const sheetRef = useRef(null);
   const [scale, setScale] = useState(0.5);
@@ -25,7 +25,9 @@ const ScaledA4Preview = ({ children }) => {
 
     const update = () => {
       const available = wrap.clientWidth;
-      if (available > 0) setScale(Math.min(1, available / A4_WIDTH_PX));
+      if (available > 0) {
+        setScale(Math.min(maxScale, available / A4_WIDTH_PX));
+      }
       setSheetHeight(sheet.offsetHeight);
     };
 
@@ -34,13 +36,16 @@ const ScaledA4Preview = ({ children }) => {
     observer.observe(wrap);
     observer.observe(sheet);
     return () => observer.disconnect();
-  }, []);
+  }, [maxScale, children]);
 
   return (
-    <div ref={wrapRef} className="w-full">
+    <div ref={wrapRef} className="w-full flex justify-center">
       <div
-        className="mx-auto bg-white shadow-2xl rounded-sm overflow-hidden"
-        style={{ width: A4_WIDTH_PX * scale, height: sheetHeight * scale }}
+        className="mx-auto bg-white shadow-2xl rounded-sm overflow-hidden transition-all duration-150"
+        style={{
+          width: A4_WIDTH_PX * scale,
+          height: sheetHeight ? sheetHeight * scale : 'auto'
+        }}
       >
         <div
           ref={sheetRef}

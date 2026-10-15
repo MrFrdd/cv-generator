@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import CVRenderer from '../components/cv-templates/CVRenderer';
+import ScaledA4Preview from '../components/cv-templates/ScaledA4Preview';
 import { defaultCVData } from '../utils/sampleData';
 
 const LandingPage = () => {
@@ -202,9 +203,15 @@ const LandingPage = () => {
           </div>
 
           {/* Scaled Preview Box */}
-          <div className="max-w-4xl mx-auto rounded-2xl border border-slate-200 overflow-hidden shadow-sm p-4 sm:p-8 flex justify-center bg-slate-200/60">
-            <div className="transform scale-[0.6] sm:scale-[0.8] origin-top shadow-xl rounded-sm overflow-hidden bg-white">
-              <CVRenderer templateId={activeTemplate} data={defaultCVData} />
+          <div className="max-w-4xl mx-auto rounded-2xl border border-slate-200/90 shadow-sm p-3 sm:p-8 flex flex-col items-center bg-slate-100/80">
+            <div className="w-full flex justify-center">
+              <ScaledA4Preview maxScale={0.85}>
+                <CVRenderer templateId={activeTemplate} data={defaultCVData} />
+              </ScaledA4Preview>
+            </div>
+            <div className="mt-5 flex items-center justify-center gap-2 text-xs text-slate-500 font-medium">
+              <CheckCircle2 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+              <span>Format Standar Internasional A4 (210 × 297 mm) — Tampil Utuh & Proporsional di Semua Perangkat</span>
             </div>
           </div>
         </div>
