@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(150) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    reset_password_token VARCHAR(255) NULL,
+    reset_password_expires DATETIME NULL,
     phone VARCHAR(50),
     headline VARCHAR(150),
     bio TEXT,

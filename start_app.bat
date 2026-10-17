@@ -1,7 +1,7 @@
 @echo off
-title Menjalankan CV Generator (Metode Waterfall)
+title Menjalankan QuickVitae Platform
 echo ========================================================
-echo   MENJALANKAN WEBSITE CV GENERATOR SECARA OTOMATIS
+echo   MENJALANKAN QUICKVITAE SECARA OTOMATIS
 echo ========================================================
 echo.
 

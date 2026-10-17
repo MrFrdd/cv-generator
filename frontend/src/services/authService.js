@@ -29,5 +29,15 @@ export const authService = {
   async deleteAccount() {
     const res = await api.delete('/auth/account');
     return res.data;
+  },
+
+  async forgotPassword(data) {
+    const res = await api.post('/auth/forgot-password', data);
+    return res.data;
+  },
+
+  async resetPassword(data) {
+    const res = await api.post('/auth/reset-password', data);
+    return res.data;
   }
 };

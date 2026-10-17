@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const pool = require('../config/database');
+const { sendResetPasswordEmail } = require('../utils/mailer');
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret_jwt_key_academic_waterfall_2026_cvgen';
@@ -361,6 +363,128 @@ exports.deleteAccount = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: 'Terjadi kesalahan pada server saat menghapus akun.'
+        });
+    }
+};
+
+// Forgot Password - Mengirim tautan reset ke email
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                success: false,
+                message: 'Alamat email wajib diisi.'
+            });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Format email tidak valid.'
+            });
+        }
+
+        // Cari user berdasarkan email
+        const [users] = await pool.query(
+            'SELECT id, name, email FROM users WHERE LOWER(email) = ? LIMIT 1',
+            [email.toLowerCase().trim()]
+        );
+
+        if (users.length === 0) {
+            // Untuk kenyamanan pengguna yang lupa email
+            return res.status(404).json({
+                success: false,
+                message: 'Email tersebut tidak terdaftar di sistem QuickVitae.'
+            });
+        }
+
+        const user = users[0];
+
+        // Generate token kriptografi acak 32 bytes (64 karakter hex)
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        
+        // Masa berlaku token: 1 jam dari sekarang
+        const expiresAt = new Date(Date.now() + 3600000); // 1 jam
+
+        // Simpan token dan waktu kedaluwarsa ke database
+        await pool.query(
+            'UPDATE users SET reset_password_token = ?, reset_password_expires = ? WHERE id = ?',
+            [resetToken, expiresAt, user.id]
+        );
+
+        // Kirim email reset password
+        const clientOrigin = req.get('origin') || process.env.CLIENT_URL || 'https://cv-generator-ai-zeta.vercel.app';
+        const mailResult = await sendResetPasswordEmail(user.email, user.name, resetToken, clientOrigin);
+
+        return res.json({
+            success: true,
+            message: 'Tautan reset kata sandi telah berhasil dikirim ke email Anda. Silakan periksa kotak masuk atau folder spam Anda.',
+            previewUrl: mailResult.previewUrl || null
+        });
+    } catch (err) {
+        console.error('Error pada forgotPassword:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Terjadi kesalahan pada server saat memproses permintaan reset kata sandi.'
+        });
+    }
+};
+
+// Reset Password - Mengatur kata sandi baru berdasarkan token
+exports.resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Token reset dan kata sandi baru wajib disertakan.'
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                success: false,
+                message: 'Kata sandi baru minimal harus 6 karakter.'
+            });
+        }
+
+        // Validasi token dan apakah belum kedaluwarsa
+        const [users] = await pool.query(
+            'SELECT id, name, email FROM users WHERE reset_password_token = ? AND reset_password_expires > NOW() LIMIT 1',
+            [token]
+        );
+
+        if (users.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Tautan reset kata sandi tidak valid atau telah kedaluwarsa. Silakan ajukan permintaan reset baru.'
+            });
+        }
+
+        const user = users[0];
+
+        // Hash kata sandi baru
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update password dan kosongkan reset token
+        await pool.query(
+            'UPDATE users SET password = ?, reset_password_token = NULL, reset_password_expires = NULL WHERE id = ?',
+            [hashedPassword, user.id]
+        );
+
+        return res.json({
+            success: true,
+            message: 'Kata sandi Anda berhasil diperbarui! Silakan masuk menggunakan kata sandi baru Anda.'
+        });
+    } catch (err) {
+        console.error('Error pada resetPassword:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Terjadi kesalahan pada server saat mereset kata sandi.'
         });
     }
 };

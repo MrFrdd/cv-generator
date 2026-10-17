@@ -57,6 +57,18 @@ async function initializeTables(connection) {
             for (const statement of statements) {
                 await connection.query(statement);
             }
+
+            // Auto-migrate kolom reset_password_token dan reset_password_expires jika belum ada
+            try {
+                const [cols] = await connection.query("SHOW COLUMNS FROM users LIKE 'reset_password_token'");
+                if (cols.length === 0) {
+                    await connection.query("ALTER TABLE users ADD COLUMN reset_password_token VARCHAR(255) NULL AFTER password, ADD COLUMN reset_password_expires DATETIME NULL AFTER reset_password_token");
+                    console.log('✓ Kolom reset_password_token & reset_password_expires berhasil dimigrasi');
+                }
+            } catch (colErr) {
+                // Abaikan jika tabel users belum siap atau kolom sudah ada
+            }
+
             console.log('✓ Struktur tabel dan template standar terverifikasi siap');
         }
     } catch (initErr) {

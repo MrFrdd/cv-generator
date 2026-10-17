@@ -25,6 +25,7 @@ async function runTests() {
 
   const testUser = {
     name: 'Ahmad Dahlan',
+    username: `user_${Date.now().toString().slice(-6)}`,
     email: `ahmad_${Date.now()}@testmail.com`,
     password: 'password123'
   };
@@ -230,6 +231,37 @@ async function runTests() {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     assert(checkDeletedRes.status === 404, 'CV sudah tidak ada di database (Status 404)');
+
+    // 11. Uji Fitur Pemulihan Akun (Lupa & Reset Kata Sandi)
+    console.log('\n[11/11] Pengujian Modul Lupa & Reset Kata Sandi...');
+    const forgotRes = await fetch(`${BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: testUser.email })
+    }).then(r => r.json());
+    assert(forgotRes.success === true, 'Permintaan reset kata sandi berhasil diproses');
+
+    // Ambil token dari response atau DB
+    const pool = require('./config/database');
+    const [userRows] = await pool.query('SELECT reset_password_token FROM users WHERE email = ?', [testUser.email]);
+    const resetToken = userRows[0]?.reset_password_token;
+    assert(!!resetToken, 'Token pemulihan tersimpan di database dengan aman');
+
+    const newPass = 'newSecretPass2026!';
+    const resetRes = await fetch(`${BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: resetToken, newPassword: newPass })
+    }).then(r => r.json());
+    assert(resetRes.success === true, 'Reset kata sandi dengan token valid berhasil');
+
+    // Login dengan password baru
+    const loginNewRes = await fetch(`${BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: testUser.email, password: newPass })
+    }).then(r => r.json());
+    assert(loginNewRes.success === true && loginNewRes.data?.token, 'Login menggunakan kata sandi baru berhasil');
 
   } catch (err) {
     console.error('Error selama pengujian:', err);

@@ -71,9 +71,17 @@ const LoginPage = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Kata Sandi (Password)
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-semibold text-slate-700">
+                Kata Sandi (Password)
+              </label>
+              <Link
+                to="/forgot-password"
+                className="text-xs text-blue-600 hover:text-blue-700 font-semibold transition"
+              >
+                Lupa kata sandi?
+              </Link>
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
               <input

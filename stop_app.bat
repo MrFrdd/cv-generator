@@ -1,7 +1,7 @@
 @echo off
-title Menghentikan CV Generator
+title Menghentikan QuickVitae Platform
 echo ========================================================
-echo   MENGHENTIKAN WEBSITE CV GENERATOR
+echo   MENGHENTIKAN APLIKASI QUICKVITAE
 echo ========================================================
 echo.
 
