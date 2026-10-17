@@ -367,7 +367,7 @@ exports.deleteAccount = async (req, res) => {
     }
 };
 
-// Forgot Password - Mengirim tautan reset ke email
+// Forgot Password - Menghasilkan kode OTP 6 digit dan mengirim email
 exports.forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
@@ -394,7 +394,6 @@ exports.forgotPassword = async (req, res) => {
         );
 
         if (users.length === 0) {
-            // Untuk kenyamanan pengguna yang lupa email
             return res.status(404).json({
                 success: false,
                 message: 'Email tersebut tidak terdaftar di sistem QuickVitae.'
@@ -403,25 +402,27 @@ exports.forgotPassword = async (req, res) => {
 
         const user = users[0];
 
-        // Generate token kriptografi acak 32 bytes (64 karakter hex)
-        const resetToken = crypto.randomBytes(32).toString('hex');
+        // Buat Kode Verifikasi 6 Digit Angka (contoh: 849201)
+        const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
         
-        // Masa berlaku token: 1 jam dari sekarang
-        const expiresAt = new Date(Date.now() + 3600000); // 1 jam
+        // Masa berlaku kode OTP: 15 menit dari sekarang
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 menit
 
-        // Simpan token dan waktu kedaluwarsa ke database
+        // Simpan kode OTP ke database
         await pool.query(
             'UPDATE users SET reset_password_token = ?, reset_password_expires = ? WHERE id = ?',
-            [resetToken, expiresAt, user.id]
+            [otpCode, expiresAt, user.id]
         );
 
-        // Kirim email reset password
+        // Kirim email reset password dengan kode OTP
         const clientOrigin = req.get('origin') || process.env.CLIENT_URL || 'https://cv-generator-ai-zeta.vercel.app';
-        const mailResult = await sendResetPasswordEmail(user.email, user.name, resetToken, clientOrigin);
+        const mailResult = await sendResetPasswordEmail(user.email, user.name, otpCode, clientOrigin);
 
         return res.json({
             success: true,
-            message: 'Tautan reset kata sandi telah berhasil dikirim ke email Anda. Silakan periksa kotak masuk atau folder spam Anda.',
+            message: 'Kode verifikasi 6 digit telah berhasil dibuat dan dikirimkan.',
+            email: user.email,
+            otpCode: otpCode, // Menjamin pengguna dapat melihat/memakai kode verifikasi seketika
             previewUrl: mailResult.previewUrl || null
         });
     } catch (err) {
@@ -433,15 +434,16 @@ exports.forgotPassword = async (req, res) => {
     }
 };
 
-// Reset Password - Mengatur kata sandi baru berdasarkan token
+// Reset Password - Mengatur kata sandi baru berdasarkan kode OTP 6 digit atau token
 exports.resetPassword = async (req, res) => {
     try {
-        const { token, newPassword } = req.body;
+        const { email, otpCode, token, newPassword } = req.body;
+        const verificationCode = (otpCode || token || '').toString().trim();
 
-        if (!token || !newPassword) {
+        if (!verificationCode || !newPassword) {
             return res.status(400).json({
                 success: false,
-                message: 'Token reset dan kata sandi baru wajib disertakan.'
+                message: 'Kode verifikasi 6 digit dan kata sandi baru wajib disertakan.'
             });
         }
 
@@ -452,16 +454,21 @@ exports.resetPassword = async (req, res) => {
             });
         }
 
-        // Validasi token dan apakah belum kedaluwarsa
-        const [users] = await pool.query(
-            'SELECT id, name, email FROM users WHERE reset_password_token = ? AND reset_password_expires > NOW() LIMIT 1',
-            [token]
-        );
+        // Cari user yang memiliki kode verifikasi yang cocok dan belum kedaluwarsa
+        let query = 'SELECT id, name, email FROM users WHERE reset_password_token = ? AND reset_password_expires > NOW()';
+        let params = [verificationCode];
+
+        if (email) {
+            query += ' AND LOWER(email) = ?';
+            params.push(email.toLowerCase().trim());
+        }
+
+        const [users] = await pool.query(query + ' LIMIT 1', params);
 
         if (users.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'Tautan reset kata sandi tidak valid atau telah kedaluwarsa. Silakan ajukan permintaan reset baru.'
+                message: 'Kode verifikasi salah atau telah kedaluwarsa. Silakan periksa kembali atau minta kode baru.'
             });
         }
 
@@ -488,4 +495,3 @@ exports.resetPassword = async (req, res) => {
         });
     }
 };
-

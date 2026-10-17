@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
-import { Lock, Eye, EyeOff, ArrowRight, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Lock, Eye, EyeOff, ArrowRight, CheckCircle2, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { authService } from '../services/authService';
 import Toast from '../components/common/Toast';
 
 const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const urlToken = searchParams.get('token') || '';
   const navigate = useNavigate();
 
+  const [otpCode, setOtpCode] = useState(urlToken);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -20,8 +21,9 @@ const ResetPasswordPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!token) {
-      setToast({ message: 'Token reset kata sandi tidak ditemukan pada tautan.', type: 'error' });
+    const cleanCode = (otpCode || urlToken).trim();
+    if (!cleanCode) {
+      setToast({ message: 'Kode verifikasi 6 digit wajib diisi!', type: 'error' });
       return;
     }
 
@@ -42,12 +44,16 @@ const ResetPasswordPage = () => {
 
     try {
       setLoading(true);
-      const res = await authService.resetPassword({ token, newPassword });
+      const res = await authService.resetPassword({ 
+        token: cleanCode, 
+        otpCode: cleanCode,
+        newPassword 
+      });
       if (res.success) {
         setSuccess(true);
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Gagal mengatur ulang kata sandi. Tautan mungkin telah kedaluwarsa.';
+      const msg = err.response?.data?.message || 'Gagal mengatur ulang kata sandi. Kode verifikasi mungkin salah atau telah kedaluwarsa.';
       setToast({ message: msg, type: 'error' });
     } finally {
       setLoading(false);
@@ -60,36 +66,19 @@ const ResetPasswordPage = () => {
         {/* Header */}
         <div className="text-center mb-6">
           <div className="w-12 h-12 rounded-xl brand-btn flex items-center justify-center mx-auto mb-3 shadow-brand text-white">
-            <Lock className="w-6 h-6" />
+            {success ? <CheckCircle2 className="w-6 h-6 text-white" /> : <Lock className="w-6 h-6 text-white" />}
           </div>
-          <h1 className="text-xl font-bold text-slate-900">Atur Kata Sandi Baru</h1>
+          <h1 className="text-xl font-bold text-slate-900">
+            {success ? 'Kata Sandi Diperbarui!' : 'Atur Kata Sandi Baru'}
+          </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Buat kata sandi baru yang kuat dan mudah Anda ingat
+            {success 
+              ? 'Kata sandi baru Anda telah aktif. Silakan masuk ke akun Anda.' 
+              : 'Masukkan kode verifikasi dan buat kata sandi baru untuk akun Anda'}
           </p>
         </div>
 
-        {!token ? (
-          /* Error Jika Tidak Ada Token */
-          <div className="space-y-4 text-center py-2">
-            <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-7 h-7" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-900">Tautan Tidak Lengkap</h3>
-              <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                Tautan pemulihan yang Anda buka tidak memiliki token verifikasi yang valid.
-              </p>
-            </div>
-            <div className="pt-2">
-              <Link
-                to="/forgot-password"
-                className="inline-block py-2.5 px-4 brand-btn text-white font-bold rounded-xl text-xs transition"
-              >
-                Minta Tautan Reset Baru
-              </Link>
-            </div>
-          </div>
-        ) : success ? (
+        {success ? (
           /* Success Screen */
           <div className="space-y-4 text-center py-2">
             <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
@@ -102,18 +91,38 @@ const ResetPasswordPage = () => {
               </p>
             </div>
             <div className="pt-2">
-              <Link
-                to="/login"
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
                 className="w-full py-3 px-4 brand-btn text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-brand transition inline-flex"
               >
                 <span>Masuk Sekarang</span>
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
             </div>
           </div>
         ) : (
           /* Form Reset Password */
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Input Kode Verifikasi */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Kode Verifikasi (6 Digit / Token)
+              </label>
+              <div className="relative">
+                <ShieldCheck className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                <input
+                  type="text"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  placeholder="Masukkan kode verifikasi 6 digit"
+                  className="w-full pl-9 pr-3 py-2.5 text-xs font-mono font-bold bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Input Sandi Baru */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Kata Sandi Baru
@@ -139,6 +148,7 @@ const ResetPasswordPage = () => {
               </div>
             </div>
 
+            {/* Input Konfirmasi Sandi */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Konfirmasi Kata Sandi Baru
@@ -176,10 +186,13 @@ const ResetPasswordPage = () => {
         )}
 
         {/* Footer Link */}
-        <div className="mt-6 text-center text-xs text-slate-500 border-t border-slate-100 pt-4">
-          Sudah ingat kata sandi Anda?{' '}
-          <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700 transition">
-            Masuk di sini
+        <div className="mt-6 text-center text-xs text-slate-500 border-t border-slate-100 pt-4 flex items-center justify-between">
+          <Link to="/forgot-password" className="font-semibold text-blue-600 hover:text-blue-700 transition inline-flex items-center gap-1">
+            <ArrowLeft className="w-3 h-3" />
+            <span>Minta Kode Baru</span>
+          </Link>
+          <Link to="/login" className="font-semibold text-slate-600 hover:text-slate-800 transition">
+            Kembali ke Masuk
           </Link>
         </div>
       </div>

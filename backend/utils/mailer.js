@@ -71,20 +71,24 @@ const sendResetPasswordEmail = async (toEmail, userName, resetToken, originUrl =
                 <p>Platform Pembuatan Dokumen CV Profesional</p>
             </div>
             <div class="content">
-                <h2>Permintaan Reset Kata Sandi</h2>
+                <h2>Permintaan Pemulihan Kata Sandi</h2>
                 <p>Halo <strong>${userName || 'Pengguna'}</strong>,</p>
-                <p>Kami menerima permintaan untuk mereset kata sandi akun QuickVitae Anda yang terdaftar dengan email <strong>${toEmail}</strong>.</p>
-                <p>Silakan klik tombol di bawah ini untuk mengatur kata sandi baru Anda:</p>
+                <p>Kami menerima permintaan untuk mengatur ulang kata sandi akun QuickVitae Anda (<strong>${toEmail}</strong>).</p>
+                <p>Gunakan kode verifikasi berikut untuk melanjutkan pembaruan kata sandi Anda di situs web:</p>
                 
-                <div class="btn-container">
-                    <a href="${resetUrl}" class="btn" target="_blank">Reset Kata Sandi Sekarang</a>
+                <div style="background: #eff6ff; border: 2px dashed #2563eb; border-radius: 14px; padding: 20px; text-align: center; margin: 24px 0;">
+                    <p style="margin: 0 0 6px 0; font-size: 11px; color: #475569; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">KODE VERIFIKASI 6 DIGIT</p>
+                    <div style="font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #1d4ed8; font-family: monospace; line-height: 1.2;">${resetToken}</div>
+                    <p style="margin: 8px 0 0 0; font-size: 11px; color: #64748b;">Kode ini berlaku selama <strong>15 menit</strong>.</p>
                 </div>
 
-                <p style="font-size: 12px; color: #64748b;">Tautan ini hanya berlaku selama <strong>1 jam</strong>. Jika Anda tidak merasa meminta reset kata sandi, abaikan email ini dan akun Anda akan tetap aman.</p>
+                <p style="font-size: 13px; color: #475569;">Atau jika Anda membuka email ini di perangkat yang sama, Anda dapat langsung mengklik tautan pemulihan di bawah ini:</p>
                 
-                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-                <p style="font-size: 12px; color: #64748b; margin-bottom: 6px;">Jika tombol di atas tidak dapat diklik, salin dan tempel URL berikut ke peramban web Anda:</p>
-                <div class="link-box">${resetUrl}</div>
+                <div class="btn-container">
+                    <a href="${resetUrl}" class="btn" target="_blank">Reset Kata Sandi Otomatis</a>
+                </div>
+
+                <p style="font-size: 12px; color: #64748b;">Jika Anda tidak merasa meminta reset kata sandi, abaikan email ini dan akun Anda tetap aman.</p>
             </div>
             <div class="footer">
                 &copy; ${new Date().getFullYear()} QuickVitae. Seluruh hak cipta dilindungi.
