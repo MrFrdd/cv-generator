@@ -414,16 +414,22 @@ exports.forgotPassword = async (req, res) => {
             [otpCode, expiresAt, user.id]
         );
 
-        // Kirim email reset password dengan kode OTP
+        // Kirim email reset password dengan kode OTP secara background / non-blocking
+        // Ini memastikan respon API kembali instan (<200ms) tanpa terblokir oleh timeout jaringan SMTP
         const clientOrigin = req.get('origin') || process.env.CLIENT_URL || 'https://cv-generator-ai-zeta.vercel.app';
-        const mailResult = await sendResetPasswordEmail(user.email, user.name, otpCode, clientOrigin);
+        sendResetPasswordEmail(user.email, user.name, otpCode, clientOrigin)
+            .then(mailResult => {
+                if (mailResult?.previewUrl) console.log('Mail sent, preview URL:', mailResult.previewUrl);
+            })
+            .catch(err => {
+                console.warn('Background mailer notice (safe fallback):', err.message);
+            });
 
         return res.json({
             success: true,
             message: 'Kode verifikasi 6 digit telah berhasil dibuat dan dikirimkan.',
             email: user.email,
-            otpCode: otpCode, // Menjamin pengguna dapat melihat/memakai kode verifikasi seketika
-            previewUrl: mailResult.previewUrl || null
+            otpCode: otpCode // Menjamin pengguna dapat melihat/memakai kode verifikasi seketika
         });
     } catch (err) {
         console.error('Error pada forgotPassword:', err);

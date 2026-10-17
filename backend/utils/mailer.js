@@ -12,14 +12,20 @@ const createTransporter = async () => {
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS
-            }
+            },
+            connectionTimeout: 4000,
+            greetingTimeout: 4000,
+            socketTimeout: 4000
         });
     }
 
     // 2. Fallback Mode Development: Buat Ethereal Test Account otomatis
-    // Ini memungkinkan testing reset password langsung bekerja tanpa konfigurasi SMTP manual
+    // Jangan biarkan koneksi menggantung lebih dari 3 detik
     try {
-        const testAccount = await nodemailer.createTestAccount();
+        const testAccountPromise = nodemailer.createTestAccount();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Ethereal mail timeout')), 3000));
+        const testAccount = await Promise.race([testAccountPromise, timeoutPromise]);
+
         return nodemailer.createTransport({
             host: testAccount.smtp.host,
             port: testAccount.smtp.port,
@@ -27,7 +33,10 @@ const createTransporter = async () => {
             auth: {
                 user: testAccount.user,
                 pass: testAccount.pass
-            }
+            },
+            connectionTimeout: 4000,
+            greetingTimeout: 4000,
+            socketTimeout: 4000
         });
     } catch (err) {
         console.warn('Gagal membuat test mail account, menggunakan fallback console log:', err.message);
